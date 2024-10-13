@@ -7,7 +7,6 @@
 
 // Grove Base Shield v2 Inputs
 int button = 2;      //D2 input
-int lightSensor = 3; //D3 input
 // Grove Input Values
 int buttonState;
 float lightSensorValue;
@@ -37,7 +36,6 @@ void setup() {
 
   // Set inputs
   pinMode(button, INPUT);
-  pinMode(lightSensor, INPUT);
 
   motor.setSpeed(minMotorSpeed);
 
@@ -52,8 +50,13 @@ void setup() {
 }
 
 void updateButtonAndLights() {
-  buttonState = digitalRead(button); //get the button's value
-  lightSensorValue = digitalRead(lightSensor); //get the lightSensor's value
+  buttonState = digitalRead(button);
+  lightSensorValue = analogRead(A0);
+  
+  if (analogRead(A0) < 120) {
+    Serial.println("Light Sensor Triggered");
+    sign = 0;
+  }
 
   if (buttonState == 1 && isButtonPressed) {
     isButtonPressed = false;
@@ -66,11 +69,6 @@ void updateButtonAndLights() {
   else if (buttonState == 0) {
     isButtonPressed = false;
     isButtonReleased = true;
-  }
-
-  if (lightSensorValue == 0) {
-    Serial.println("Light Sensor Triggered");
-    sign = 0;
   }
 }
 
@@ -96,6 +94,7 @@ void rotateStepperMotor(int i) {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  
   updateButtonAndLights();
 
   if (isButtonPressed) {
