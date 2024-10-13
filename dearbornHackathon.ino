@@ -17,9 +17,11 @@ bool isButtonPressed;
 bool isButtonReleased;
 
 // Stepper Motor Using The Stepper Library
-int stepsPerRotation = 4096;
-const int STEPPER_MOTOR_INTERVAL = 1; //in ms
-Stepper motor = Stepper(stepsPerRotation, 9, 8, 11, 10);
+int stepsPerRotation = 32;
+int motorSpeed = 25;
+int stepsInSequence = 1;
+Stepper motor = Stepper(stepsPerRotation, 8, 9, 10, 11);
+int sign;
 
 // enum representing the state of the system
 enum possibleStates {CLOSED, OPEN, OPENING, CLOSING};
@@ -33,20 +35,22 @@ void setup() {
   pinMode(button, INPUT);
   pinMode(lightSensor, INPUT);
 
+  motor.setSpeed(motorSpeed);
+
   // Initialize variables
   systemState = CLOSED;
   isButtonPressed = false;
   isButtonReleased = true;
-
-  motor.setSpeed(120);
+  sign = 0;
 
   delay(100);
 }
 
 // Checks to see if the button was just pressed this loop
 // If the button was held down for > 1 cycle, isButtonPressed = false
-void updateButton() {
+void checkLogic() {
   buttonState = digitalRead(button); //get the button's value
+  lightSensorValue = digitalRead(lightSensor); //get the lightSensor's value
 
   if (buttonState == 1 && isButtonPressed) {
     isButtonPressed = false;
@@ -60,57 +64,57 @@ void updateButton() {
     isButtonPressed = false;
     isButtonReleased = true;
   }
-}
-
-void rotateStepperMotor() {
-  static uint32_t tThing;
-  uint32_t tNow = millis();
-
-  //if(not time to do thing)
-  if((tNow - tThing) < STEPPER_MOTOR_INTERVAL) {
-    return;
-  }
-
-  //save time for next check
-  tThing = tNow;
-
-  motor.step(1);
-}
-
-void open() {
-  systemState = OPENING;
-  rotateStepperMotor();
-}
-
-void close() {
-  systemState = CLOSING;
-  rotateStepperMotor();
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  lightSensorValue = digitalRead(lightSensor); //get the lightSensor's value
-
-  updateButton();
 
   if (isButtonPressed) {
     switch (systemState) {
       case CLOSED:
         open();
-        Serial.println("Opening");
         break;
       case OPEN:
         close();
-        Serial.println("Closing");
         break;
       case OPENING:
         close();
-        Serial.println("Closing");
         break;
       case CLOSING:
         open();
-        Serial.println("Opening");
         break;
     }
   }
+
+  if (lightSensorValue == 0) {
+    Serial.println("Light Sensor Triggered");
+    sign = 0;
+  }
+}
+
+void rotateStepperMotor(int i) {
+  motor.step(i*sign);
+
+  checkLogic();
+  if (isButtonPressed) {
+    sign = 0;
+    return;
+  }
+
+  rotateStepperMotor(stepsInSequence*sign);
+}
+
+void open() {
+  systemState = OPENING;
+  Serial.println("Opening");
+  sign = 1;
+  rotateStepperMotor(stepsInSequence);
+}
+
+void close() {
+  systemState = CLOSING;
+  Serial.println("Closing");
+  sign = -1;
+  rotateStepperMotor(stepsInSequence);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  checkLogic();
 }
