@@ -13,7 +13,7 @@ volatile int lastEncoded = 0;
 L298N myMotor(5, 8, 9);
 
 // Motor control variables
-int maxRPM = 90;  // Speed of the motor (0-255)
+int maxRPM = 45;  // Speed of the motor (0-255)
 
 // Grove Base Shield v2 inputs
 int button = 6; // D6 input
@@ -24,10 +24,13 @@ bool isButtonPressed = false;
 bool isButtonReleased = true;
 
 // Encoder min, encoder max
-int minRotation = -150;
-int maxRotation = 150;
+int minRotation = 0;
+int maxRotation = 300;
 
-int minLumens = 100;
+int minLumens = 110;
+
+const int ledPin1 = 0;
+const int ledPin2 = 0;
 
 // Enum representing the state of the system
 enum possibleStates {CLOSED, OPEN, OPENING, CLOSING};
@@ -47,6 +50,12 @@ void setup() {
   // Attach interrupts for the encoder
   attachInterrupt(digitalPinToInterrupt(encoderPinA), updateEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPinB), updateEncoder, CHANGE);
+
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+  
+  digitalWrite(ledPin1, HIGH);
+  digitalWrite(ledPin2, HIGH);
 }
 
 void loop() {
@@ -84,7 +93,11 @@ void checkInputs() {
 
   if (analogRead(A3) < minLumens) {
     Serial.println("Light Sensor Triggered");
-    myMotor.stop();
+    if (systemState == OPENING) {
+      myMotor.stop();
+    }
+    systemState = OPENING;
+    myMotor.forward();
     return;
   }
 
@@ -116,12 +129,10 @@ void runMotor(int sign) {
     return;
   }
 
-  /*
-  for (int i=0; i<maxRPM; i+=5) {
+  for (int i=0; i<maxRPM; i++) {
     myMotor.setSpeed(i);
     delay(1);
   }
-  */
 
   checkInputs();
 }
