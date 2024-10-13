@@ -77,6 +77,8 @@ void rotateStepperMotor(int i) {
     return;
   }
 
+  Serial.println(i*sign);
+
   motor.setSpeed(rpm);
 
   motor.step(i*sign);
@@ -89,12 +91,12 @@ void rotateStepperMotor(int i) {
 
   if (rpm < maxMotorSpeed) { rpm+=rpmIncrease; }
 
-  rotateStepperMotor(stepsInSequence*sign);
+  rotateStepperMotor(stepsInSequence);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  
+
   updateButtonAndLights();
 
   if (isButtonPressed) {
@@ -102,7 +104,7 @@ void loop() {
       case OPEN:
         //
       case OPENING:
-        systemState = OPENING;
+        systemState = CLOSING;
         Serial.println("Opening");
         sign = 1;
         rpm = minMotorSpeed;
@@ -111,7 +113,7 @@ void loop() {
       case CLOSED:
         //
       case CLOSING:
-        systemState = CLOSING;
+        systemState = OPENING;
         Serial.println("Closing");
         sign = -1;
         rpm = minMotorSpeed;
