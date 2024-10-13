@@ -29,8 +29,8 @@ int maxRotation = 300;
 
 int minLumens = 110;
 
-const int ledPin1 = 0;
-const int ledPin2 = 0;
+const int ledPin1 = 10;
+const int ledPin2 = 7;
 
 // Enum representing the state of the system
 enum possibleStates {CLOSED, OPEN, OPENING, CLOSING};
