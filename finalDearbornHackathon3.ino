@@ -27,7 +27,7 @@ bool isButtonReleased = true;
 int minRotation = 0;
 int maxRotation = 300;
 
-int minLumens = 110;
+int minLumens = 125;
 
 const int ledPin1 = 10;
 const int ledPin2 = 7;
