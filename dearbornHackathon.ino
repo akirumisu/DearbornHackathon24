@@ -18,10 +18,14 @@ bool isButtonReleased;
 
 // Stepper Motor Using The Stepper Library
 int stepsPerRotation = 32;
-int motorSpeed = 25;
+int minMotorSpeed = 30;
+int maxMotorSpeed = 200;
+int rpmIncrease = 1;
 int stepsInSequence = 1;
 Stepper motor = Stepper(stepsPerRotation, 8, 9, 10, 11);
+
 int sign;
+int rpm;
 
 // enum representing the state of the system
 enum possibleStates {CLOSED, OPEN, OPENING, CLOSING};
@@ -35,20 +39,19 @@ void setup() {
   pinMode(button, INPUT);
   pinMode(lightSensor, INPUT);
 
-  motor.setSpeed(motorSpeed);
+  motor.setSpeed(minMotorSpeed);
 
   // Initialize variables
   systemState = CLOSED;
   isButtonPressed = false;
   isButtonReleased = true;
   sign = 0;
+  rpm = 0;
 
-  delay(100);
+  delay(10);
 }
 
-// Checks to see if the button was just pressed this loop
-// If the button was held down for > 1 cycle, isButtonPressed = false
-void checkLogic() {
+void updateButtonAndLights() {
   buttonState = digitalRead(button); //get the button's value
   lightSensorValue = digitalRead(lightSensor); //get the lightSensor's value
 
@@ -65,23 +68,6 @@ void checkLogic() {
     isButtonReleased = true;
   }
 
-  if (isButtonPressed) {
-    switch (systemState) {
-      case CLOSED:
-        open();
-        break;
-      case OPEN:
-        close();
-        break;
-      case OPENING:
-        close();
-        break;
-      case CLOSING:
-        open();
-        break;
-    }
-  }
-
   if (lightSensorValue == 0) {
     Serial.println("Light Sensor Triggered");
     sign = 0;
@@ -89,32 +75,49 @@ void checkLogic() {
 }
 
 void rotateStepperMotor(int i) {
+  if (sign == 0) {
+    return;
+  }
+
+  motor.setSpeed(rpm);
+
   motor.step(i*sign);
 
-  checkLogic();
+  updateButtonAndLights();
   if (isButtonPressed) {
     sign = 0;
     return;
   }
 
+  if (rpm < maxMotorSpeed) { rpm+=rpmIncrease; }
+
   rotateStepperMotor(stepsInSequence*sign);
-}
-
-void open() {
-  systemState = OPENING;
-  Serial.println("Opening");
-  sign = 1;
-  rotateStepperMotor(stepsInSequence);
-}
-
-void close() {
-  systemState = CLOSING;
-  Serial.println("Closing");
-  sign = -1;
-  rotateStepperMotor(stepsInSequence);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  checkLogic();
+  updateButtonAndLights();
+
+  if (isButtonPressed) {
+    switch (systemState) {
+      case OPEN:
+        //
+      case OPENING:
+        systemState = OPENING;
+        Serial.println("Opening");
+        sign = 1;
+        rpm = minMotorSpeed;
+        rotateStepperMotor(stepsInSequence);
+        break;
+      case CLOSED:
+        //
+      case CLOSING:
+        systemState = CLOSING;
+        Serial.println("Closing");
+        sign = -1;
+        rpm = minMotorSpeed;
+        rotateStepperMotor(stepsInSequence);
+        break;
+    }
+  }
 }
