@@ -10,10 +10,10 @@ volatile long encoderPosition = 0; // The position based on encoder
 volatile int lastEncoded = 0;
 
 // With Enable pin to control speed
-L298N myMotor(8, 9);
+L298N myMotor(5, 8, 9);
 
 // Motor control variables
-int maxRPM = 30;  // Speed of the motor (0-255)
+int maxRPM = 90;  // Speed of the motor (0-255)
 
 // Grove Base Shield v2 inputs
 int button = 6; // D6 input
@@ -24,8 +24,8 @@ bool isButtonPressed = false;
 bool isButtonReleased = true;
 
 // Encoder min, encoder max
-int minRotation = 0;
-int maxRotation = 300;
+int minRotation = -150;
+int maxRotation = 150;
 
 int minLumens = 100;
 
@@ -35,6 +35,8 @@ possibleStates systemState;
 
 void setup() {
   Serial.begin(9600);
+
+  myMotor.setSpeed(maxRPM);
 
   // Set up encoder pins
   pinMode(encoderPinA, INPUT);
@@ -114,10 +116,12 @@ void runMotor(int sign) {
     return;
   }
 
+  /*
   for (int i=0; i<maxRPM; i+=5) {
     myMotor.setSpeed(i);
     delay(1);
   }
+  */
 
   checkInputs();
 }
